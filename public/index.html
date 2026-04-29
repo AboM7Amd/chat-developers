@@ -1,52 +1,47 @@
-[4/29/2026 7:58 PM] مكتبة النورين: <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مطور الدردشة الذكي 🤖</title>
+    <title>مساعد الذكاء الاصطناعي</title>
     <style>
-        :root { --primary: #2563eb; --bg: #f1f5f9; --ai-msg: #ffffff; --user-msg: #2563eb; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; height: 100vh; color: #1e293b; }
-        header { background: #fff; padding: 1rem; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); font-weight: bold; font-size: 1.2rem; border-bottom: 3px solid var(--primary); }
-        #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
-        .message { max-width: 85%; padding: 14px 18px; border-radius: 18px; font-size: 15.5px; line-height: 1.6; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .user { align-self: flex-end; background: var(--user-msg); color: white; border-bottom-left-radius: 4px; }
-        .ai { align-self: flex-start; background: var(--ai-msg); color: #334155; border-bottom-right-radius: 4px; border: 1px solid #e2e8f0; }
-        #input-area { background: white; padding: 15px 20px; display: flex; gap: 10px; border-top: 1px solid #e2e8f0; align-items: center; }
-        input { flex: 1; padding: 12px 15px; border: 2px solid #e2e8f0; border-radius: 12px; outline: none; transition: 0.3s; font-size: 16px; }
+        :root { --primary: #2563eb; --bg: #f1f5f9; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        header { background: white; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-bottom: 3px solid var(--primary); font-weight: bold; font-size: 20px; }
+        #chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .msg { max-width: 80%; padding: 12px 16px; border-radius: 15px; font-size: 16px; line-height: 1.5; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .user { align-self: flex-end; background: var(--primary); color: white; border-bottom-left-radius: 2px; }
+        .ai { align-self: flex-start; background: white; color: #1e293b; border-bottom-right-radius: 2px; border: 1px solid #e2e8f0; }
+        #input-area { background: white; padding: 20px; display: flex; gap: 10px; border-top: 1px solid #e2e8f0; }
+        input { flex: 1; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; outline: none; font-size: 16px; }
         input:focus { border-color: var(--primary); }
-        button { background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        button:hover { opacity: 0.9; transform: translateY(-1px); }
-        .loading { font-size: 12px; color: #64748b; margin-top: 4px; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 25px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        button:hover { opacity: 0.9; }
     </style>
 </head>
 <body>
     <header>🤖 مساعدك الذكي المتطور</header>
-    <div id="chat-container"></div>
+    <div id="chat-box"></div>
     <div id="input-area">
-        <input type="text" id="user-input" placeholder="اكتب سؤالك هنا..." autocomplete="off">
-        <button id="send-btn" onclick="sendMessage()">إرسال</button>
+        <input type="text" id="user-input" placeholder="اكتب سؤالك هنا..." onkeypress="if(event.key==='Enter') sendMessage()">
+        <button onclick="sendMessage()">إرسال</button>
     </div>
 
     <script>
-        const container = document.getElementById('chat-container');
+        const chatBox = document.getElementById('chat-box');
         let history = [];
 
         async function sendMessage() {
             const input = document.getElementById('user-input');
-            const btn = document.getElementById('send-btn');
             const text = input.value.trim();
             if (!text) return;
 
-            input.value = '';
-            input.disabled = true;
-            btn.disabled = true;
-
             addMessage(text, 'user');
+            input.value = '';
             history.push({ role: "user", content: text });
-            
-            const aiDiv = addMessage('جاري التفكير...', 'ai');
-            
+
+            const aiMsg = addMessage('...', 'ai');
+
             try {
                 const response = await fetch('/api/chat', {
                     method: 'POST',
@@ -56,38 +51,28 @@
 
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
-                let aiText = "";
-                aiDiv.innerText = "";
+                let fullText = "";
+                aiMsg.innerText = "";
 
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
-                    const chunk = decoder.decode(value, { stream: true });
-                    aiText += chunk;
-                    aiDiv.innerText = aiText;
-                    container.scrollTop = container.scrollHeight;
+                    fullText += decoder.decode(value, { stream: true });
+                    aiMsg.innerText = fullText;
+                    chatBox.scrollTop = chatBox.scrollHeight;
                 }
-                history.push({ role: "assistant", content: aiText });
-            } catch (err) {
-                aiDiv.innerText = "⚠️ خطأ في الاتصال بالسيرفر.";
-            } finally {
-                input.disabled = false;
-                btn.disabled = false;
-                input.focus();
-            }
-        }
-[4/29/2026 7:58 PM] مكتبة النورين: function addMessage(text, role) {
-            const div = document.createElement('div');
-            div.className = message ${role};
-            div.innerText = text;
-            container.appendChild(div);
-            container.scrollTop = container.scrollHeight;
-            return div;
+                history.push({ role: "assistant", content: fullText });
+            } catch (e) { aiMsg.innerText = "⚠️ خطأ في الاتصال."; }
         }
 
-        document.getElementById('user-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
+        function addMessage(text, role) {
+            const div = document.createElement('div');
+            div.className = `msg ${role}`;
+            div.innerText = text;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return div;
+        }
     </script>
 </body>
 </html>
